@@ -1,7 +1,6 @@
 ---
 name: bunny-components
-description: This skill should be used when the user asks to "add a billing portal", "embed subscription management", "add Bunny components to React", "implement self-service billing in my app", "add a billing page", "let users manage their subscription", "show invoices in my app", "add a signup flow with Bunny", "embed Bunny billing UI", "add payment method management", or any task involving the @bunnyapp/components React library for embedding Bunny billing UI into a React application.
-version: 0.1.0
+description: This skill should be used when the user asks to "add a billing portal", "embed subscription management", "add Bunny components to React", "implement self-service billing in my app", "add a billing page", "let users manage their subscription", "show invoices in my app", "add a signup flow with Bunny", "embed Bunny billing UI", "add payment method management", "build a subscription management area", "build a subscription portal", "let users upgrade their plan", "let users change their subscription", "let users downgrade their plan", "let users cancel their subscription in my app", "let users pay their invoice in my app", "add a page where users can manage their billing", or any task where users should be able to upgrade, modify, or pay for their subscription inside the app using the @bunnyapp/components React library.
 ---
 
 # Bunny React Components Integration
@@ -139,6 +138,22 @@ export function SignupPage() {
   );
 }
 ```
+
+## Setup Checklist
+
+When integrating Bunny components, always present the following as a numbered list of **manual steps the user must complete**. Do not skip the environment variable step — call it out explicitly, list each variable, and make clear these must be set before the components will work.
+
+1. **Set up environment variables** — the user must configure these manually:
+   ```
+   NEXT_PUBLIC_BUNNY_HOST=https://<subdomain>.bunny.com   # exposed to browser; safe for public env vars
+   ```
+   If using the `<Signup />` component, also add:
+   ```
+   NEXT_PUBLIC_BUNNY_SIGNUP_TOKEN=<signup-scoped-token>   # token with signup:read signup:write scopes only
+   ```
+   Portal session tokens for authenticated billing pages are generated server-side at runtime (not stored as env vars) — see the `bunny-billing` skill for how to generate them.
+2. **Whitelist your domain in the Bunny admin** — required to avoid CORS errors. Add `localhost` for development and your production domain for live environments.
+3. **Install the package**: `npm install @bunnyapp/components`
 
 ## Key Rules
 

@@ -1,7 +1,6 @@
 ---
 name: bunny-billing
-description: This skill should be used when the user asks to "integrate Bunny billing", "add subscription billing", "set up Bunny.com subscriptions", "implement Bunny billing in my app", "connect to Bunny for subscriptions", "add metered billing", "track feature usage with Bunny", "create a billing portal", "handle subscription webhooks from Bunny", or any task involving the Bunny.com subscription billing platform using the bunny-node or bunny-ruby SDKs.
-version: 0.1.0
+description: This skill should be used when the user asks to "integrate Bunny billing", "add subscription billing", "set up Bunny.com subscriptions", "implement Bunny billing in my app", "connect to Bunny for subscriptions", "add metered billing", "track feature usage with Bunny", "redirect users to the Bunny billing portal", "generate a portal session token", "handle subscription webhooks from Bunny", or any task involving the Bunny.com subscription billing platform using the bunny-node or bunny-ruby SDKs. Use bunny-components instead when the user wants to embed subscription management UI directly inside their React app.
 ---
 
 # Bunny Subscription Billing Integration
@@ -61,9 +60,11 @@ Always store credentials in environment variables — never hardcode them.
 
 Called when a new user signs up. Creates the account, subscription, and tenant in one call.
 
+> **Before writing this code**, ask the user what their price list code is (e.g. `starter`, `pro`, `enterprise`) or confirm it should be read from `BUNNY_PRICE_LIST_CODE`. Store it as an environment variable — never hardcode it.
+
 **Node.js:**
 ```typescript
-const subscription = await bunny.subscriptionCreate("starter", {
+const subscription = await bunny.subscriptionCreate(process.env.BUNNY_PRICE_LIST_CODE, {
   accountName: "Acme Corp",
   firstName: "Jane",
   lastName: "Doe",
@@ -77,7 +78,7 @@ const subscription = await bunny.subscriptionCreate("starter", {
 **Ruby:**
 ```ruby
 subscription = BunnyApp::Subscription.create(
-  price_list_code: 'starter',
+  price_list_code: ENV['BUNNY_PRICE_LIST_CODE'],
   options: {
     account_name: 'Acme Corp',
     first_name: 'Jane',
@@ -96,7 +97,7 @@ Used when adding a second subscription to an existing customer.
 
 **Node.js:**
 ```typescript
-const subscription = await bunny.subscriptionCreate("starter", {
+const subscription = await bunny.subscriptionCreate(process.env.BUNNY_PRICE_LIST_CODE, {
   accountId: "account-123",
   tenantCode: "acme-team",
   tenantName: "Acme Corp",
@@ -106,7 +107,7 @@ const subscription = await bunny.subscriptionCreate("starter", {
 **Ruby:**
 ```ruby
 subscription = BunnyApp::Subscription.create(
-  price_list_code: 'starter',
+  price_list_code: ENV['BUNNY_PRICE_LIST_CODE'],
   options: { account_id: '456', tenant_code: 'acme-team', tenant_name: 'Acme Corp' }
 )
 ```
@@ -269,6 +270,7 @@ Required environment variables:
 BUNNY_BASE_URL=https://<subdomain>.bunny.com
 BUNNY_CLIENT_ID=<your-client-id>
 BUNNY_CLIENT_SECRET=<your-client-secret>
+BUNNY_PRICE_LIST_CODE=<your-price-list-code>   # e.g. starter, pro, enterprise — ask the user if unknown
 BUNNY_WEBHOOK_SECRET=<webhook-signing-token>   # for webhook validation
 ```
 
@@ -289,16 +291,25 @@ bundle add bunny_app
 
 ## Implementation Checklist
 
-When building a Bunny billing integration:
+When building a Bunny billing integration, always present the following as a numbered list of **manual steps the user must complete**. Do not skip the environment variable step — call it out explicitly, list each variable, and make clear these must be set before the integration will work.
 
-1. Install the SDK and configure credentials via environment variables
-2. Implement `subscriptionCreate` on signup — decide whether to use `trial: true` or go straight to paid
-3. Store the returned `subscription.id` and `tenant.code` in your database
-4. Add a billing portal link using `portalSessionCreate` (redirect, don't embed)
-5. Implement webhook endpoint with signature validation to react to billing events
-6. Add `featureUsageCreate` calls at metered usage points
-7. Handle `subscriptionCancel` for account deletion / churn flows
-8. Test with Bunny's sandbox environment before going live
+1. **Set up environment variables** — the user must configure these manually before the integration will work:
+   ```
+   BUNNY_BASE_URL=https://<subdomain>.bunny.com
+   BUNNY_CLIENT_ID=<your-client-id>
+   BUNNY_CLIENT_SECRET=<your-client-secret>
+   BUNNY_PRICE_LIST_CODE=<your-price-list-code>   # e.g. starter, pro, enterprise
+   BUNNY_WEBHOOK_SECRET=<webhook-signing-token>   # only needed if handling webhooks
+   ```
+   Obtain credentials from the Bunny admin: **Settings > API Clients**.
+2. Install the SDK and configure credentials via environment variables
+3. Implement `subscriptionCreate` on signup — decide whether to use `trial: true` or go straight to paid
+4. Store the returned `subscription.id` and `tenant.code` in your database
+5. Add a billing portal link using `portalSessionCreate` (redirect, don't embed)
+6. Implement webhook endpoint with signature validation to react to billing events
+7. Add `featureUsageCreate` calls at metered usage points
+8. Handle `subscriptionCancel` for account deletion / churn flows
+9. Test with Bunny's sandbox environment before going live
 
 ## Additional Resources
 
