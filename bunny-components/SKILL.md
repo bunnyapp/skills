@@ -46,6 +46,28 @@ Two token types are supported:
 
 **For customer-facing pages**, always use a portal session token. Generate one server-side using the Bunny SDK (see `bunny-billing` skill) and pass it to the client. Never expose API tokens to the browser.
 
+> **Important:** The server-side Bunny API client must include the `security:write` scope to call `portalSessionCreate`. Add it to the `scope` string during SDK initialisation:
+>
+> ```typescript
+> // Node.js
+> const bunny = new Bunny({
+>   baseUrl: process.env.BUNNY_BASE_URL,
+>   clientId: process.env.BUNNY_CLIENT_ID,
+>   clientSecret: process.env.BUNNY_CLIENT_SECRET,
+>   scope: "standard:read standard:write security:write",
+> });
+> ```
+> ```ruby
+> # Ruby
+> BunnyApp.config do |c|
+>   c.client_id     = ENV['BUNNY_CLIENT_ID']
+>   c.client_secret = ENV['BUNNY_CLIENT_SECRET']
+>   c.scope         = 'standard:read standard:write security:write'
+>   c.base_uri      = ENV['BUNNY_BASE_URL']
+> end
+> ```
+> Without `security:write`, portal session token generation will fail with an authorization error.
+
 ```tsx
 // Server: generate token (Node.js example)
 const token = await bunny.portalSessionCreate("acme-team", returnUrl, 4);
