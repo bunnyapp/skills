@@ -1,0 +1,11 @@
+# CODEOWNERS — automatic review routing
+# https://docs.github.com/en/repositories/managing-your-repositories-settings-and-configuration/customizing-your-repository/about-code-owners
+#
+# @richet reviews every change in this repo until ownership explicitly transfers
+# to skill-specific authors. The admin set provides fallback review capacity.
+
+*                         @richet @christianbpedersen @tbpeders @bunnifaccio @bunny-rich
+
+# Skills originally authored by @richet — he remains the primary reviewer.
+/bunny-billing/           @richet
+/bunny-components/        @richet

@@ -1,0 +1,97 @@
+name: Validate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  skills-format:
+    name: Skills format validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PyYAML
+        run: python3 -m pip install --user pyyaml
+      - name: Validate every skill
+        run: |
+          python3 - <<'PY'
+          import re, sys, yaml, pathlib
+          DESCRIPTION_MAX = 1024
+          errors = []
+          # Skills live at the top level (e.g. bunny-graphql/SKILL.md).
+          for skill_dir in sorted(pathlib.Path(".").glob("bunny-*/")):
+              if not skill_dir.is_dir():
+                  continue
+              name = skill_dir.name
+              path = skill_dir / "SKILL.md"
+              if not path.exists():
+                  errors.append(f"{skill_dir}: missing SKILL.md")
+                  continue
+              text = path.read_text()
+              m = re.match(r"^---\n(.*?)\n---\n", text, re.DOTALL)
+              if not m:
+                  errors.append(f"{path}: missing YAML frontmatter")
+                  continue
+              try:
+                  meta = yaml.safe_load(m.group(1)) or {}
+              except yaml.YAMLError as exc:
+                  errors.append(f"{path}: unparseable frontmatter ({exc})")
+                  continue
+              for field in ("name", "description"):
+                  if not meta.get(field):
+                      errors.append(f"{path}: frontmatter missing '{field}'")
+              if meta.get("name") and meta["name"] != name:
+                  errors.append(f"{path}: name '{meta['name']}' != directory '{name}'")
+              desc = meta.get("description", "")
+              if len(desc) > DESCRIPTION_MAX:
+                  errors.append(f"{path}: description {len(desc)} chars > max {DESCRIPTION_MAX}")
+          if errors:
+              print("\n".join(errors))
+              sys.exit(1)
+          print("All skills valid.")
+          PY
+
+  markdown-lint:
+    name: Markdown lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Run markdownlint
+        run: npx --yes markdownlint-cli "bunny-*/**/*.md" "template/**/*.md" "README.md" "CONTRIBUTING.md" "AGENTS.md" --disable MD013 MD033 MD041 --ignore-path .markdownlintignore
+
+  json-lint:
+    name: JSON manifests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Parse every JSON manifest
+        run: |
+          for f in $(git ls-files '*.json'); do
+            echo "Checking $f"
+            python3 -c "import json,sys; json.load(open('$f'))"
+          done
+
+  secret-scan:
+    name: Secret scan (skill examples)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reject plausible secrets in code samples
+        run: |
+          set -e
+          # Flags: inline Bearer tokens, AWS-like keys, generic high-entropy 32+ char strings in fenced code blocks.
+          # Allows placeholder forms like $BUNNY_ACCESS_TOKEN, ${BUNNY_ACCESS_TOKEN}, <ACCESS_TOKEN>, process.env.*, ENV['*'], os.getenv("*").
+          if grep -rEn --include='*.md' \
+              -e 'Bearer [A-Za-z0-9_\-]{24,}' \
+              -e 'AKIA[0-9A-Z]{16}' \
+              -e '"(sk|pk|xoxb)_[A-Za-z0-9]{20,}"' \
+              bunny-*/ template/ README.md CONTRIBUTING.md AGENTS.md 2>/dev/null \
+            | grep -Ev 'Bearer \$|Bearer <|Bearer \{|Bearer YOUR_|env\.|process\.env|ENV\[|os\.getenv' ; then
+            echo "::error::Possible hardcoded secret in skill content. Use env vars or placeholders."
+            exit 1
+          fi
+          echo "No hardcoded secrets found."

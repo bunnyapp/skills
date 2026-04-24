@@ -1,0 +1,24 @@
+name: Link check
+
+on:
+  schedule:
+    - cron: "0 13 * * 1" # Mondays, 13:00 UTC
+  workflow_dispatch:
+
+jobs:
+  links:
+    name: Check external URLs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run lychee link checker
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --verbose
+            --no-progress
+            --accept 200,203,204,206,429
+            --exclude-mail
+            --exclude 'https?://(localhost|127\.0\.0\.1|<subdomain>\.bunny\.com|example\.bunny\.com)'
+            skills/**/*.md template/*.md README.md
+          fail: true

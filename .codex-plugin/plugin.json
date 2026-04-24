@@ -1,0 +1,29 @@
+{
+  "name": "bunny-plugin",
+  "version": "0.1.0",
+  "description": "Bunny developer tools for OpenAI Codex — search Bunny docs, generate and validate GraphQL, and integrate Bunny subscriptions and billing into your app",
+  "author": { "name": "Bunny" },
+  "homepage": "https://docs.bunny.com/developer",
+  "repository": "https://github.com/bunnyapp/skills",
+  "license": "MIT",
+  "keywords": ["bunny", "subscriptions", "billing", "graphql", "agent-skills"],
+  "skills": "./",
+  "interface": {
+    "displayName": "Bunny",
+    "shortDescription": "Search Bunny docs, validate GraphQL, and integrate subscriptions and billing faster.",
+    "longDescription": "Search live Bunny documentation, generate and validate GraphQL queries against Bunny's API, and get guided integrations for the Node and Ruby SDKs, the @bunnyapp/components React library, webhooks, the customer portal, and the subscription/quote/invoice lifecycle — all without leaving your workflow.",
+    "developerName": "Bunny",
+    "category": "Productivity",
+    "capabilities": ["Read"],
+    "logo": "./assets/bunny_glyph.svg",
+    "composerIcon": "./assets/bunny_glyph.svg",
+    "brandColor": "#FF5833",
+    "websiteURL": "https://docs.bunny.com/developer",
+    "defaultPrompt": [
+      "Create a Bunny subscription for a customer using the Node SDK",
+      "Handle a Bunny webhook event in Express",
+      "Add a Bunny checkout page to my Next.js app using @bunnyapp/components",
+      "Validate my GraphQL mutation against the Bunny schema"
+    ]
+  }
+}

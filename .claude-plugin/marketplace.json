@@ -1,0 +1,28 @@
+{
+  "name": "bunny-ai-toolkit",
+  "owner": {
+    "name": "Bunny"
+  },
+  "metadata": {
+    "description": "Bunny developer tools for Claude Code"
+  },
+  "plugins": [
+    {
+      "name": "bunny-plugin",
+      "source": "./",
+      "description": "Search Bunny docs, generate and validate GraphQL, and integrate Bunny subscriptions and billing into your app",
+      "version": "0.1.0",
+      "author": { "name": "Bunny" },
+      "license": "MIT",
+      "homepage": "https://github.com/bunnyapp/skills",
+      "keywords": [
+        "bunny",
+        "subscriptions",
+        "billing",
+        "graphql",
+        "mcp",
+        "agent-skills"
+      ]
+    }
+  ]
+}
