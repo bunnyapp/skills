@@ -1,0 +1,19 @@
+{
+  "name": "bunny-ai-toolkit",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI agent skills, MCP server, and plugin manifests for integrating Bunny into your app",
+  "author": "Bunny",
+  "license": "MIT",
+  "keywords": [
+    "bunny",
+    "subscriptions",
+    "billing",
+    "mcp",
+    "graphql",
+    "agent-skills",
+    "claude-code",
+    "cursor",
+    "copilot"
+  ]
+}

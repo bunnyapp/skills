@@ -1,44 +1,81 @@
-# Bunny Skills for Claude Code
+# Bunny AI Toolkit
 
-This repository contains [skills](https://docs.anthropic.com/en/docs/claude-code/skills) for [Claude Code](https://claude.ai/code) that help LLMs integrate with [Bunny.com](https://bunny.com) subscription billing.
+Connect your AI coding assistant to Bunny. The toolkit bundles [Agent Skills](https://docs.anthropic.com/en/docs/claude-code/skills) for Bunny's GraphQL API, the official Node and Ruby SDKs, the `@bunnyapp/components` React library, webhooks, the customer portal, and the subscription / quote / invoice lifecycle.
 
-## Skills
+For more context see [docs.bunny.com/developer](https://docs.bunny.com/developer).
 
-- **bunny-billing** — Backend billing integrations using the Node.js or Ruby SDKs. Covers subscription creation, billing portals, metered usage, webhooks, and more.
-- **bunny-components** — Embedding Bunny's pre-built React billing UI components for self-service subscription management inside your app.
+## Install
 
-## Installing for Claude Code
+- **For Claude Code**: run these two commands in a chat:
 
-Skills are installed by pointing Claude Code at a directory containing skill files. You can install these skills globally (available in all projects) or per-project.
+  ```text
+  /plugin marketplace add bunnyapp/skills
+  /plugin install bunny-plugin@bunny-ai-toolkit
+  ```
 
-### Global install
+- **For Cursor**: install from the Cursor Marketplace.
 
-Add the following to `~/.claude/settings.json`:
+- **For Gemini CLI**: run this command in your terminal:
 
-```json
-{
-  "skills": [
-    "/path/to/bunny/skills"
-  ]
-}
-```
+  ```bash
+  gemini extensions install https://github.com/bunnyapp/skills
+  ```
 
-### Per-project install
+- **For OpenAI Codex**: in the Codex CLI, run `/plugins`, search for **Bunny**,
+  and select **Add to Codex**.
 
-Add the following to `.claude/settings.json` in your project root:
+- **For VS Code**: open the Command Palette (`CMD+SHIFT+P`) and run
+  **Chat: Install Plugin From Source**, then paste:
 
-```json
-{
-  "skills": [
-    "/path/to/bunny/skills"
-  ]
-}
-```
+  ```text
+  https://github.com/bunnyapp/skills
+  ```
 
-Once installed, Claude Code will automatically invoke the relevant skill when you describe what you want — for example:
+- **For any agentskills.io-compatible tool**: install individual skills with:
 
-> "Integrate Bunny billing into my Node.js app"
+  ```bash
+  npx skills add bunnyapp/skills --skill <skill-name>
+  ```
 
-> "Add a subscription management page using Bunny components"
+## What you get
 
-No special commands are needed; Claude detects the right skill from your description.
+- **Docs and schema-aware help**: search Bunny's developer documentation and
+  GraphQL schema from inside your editor
+- **SDK-guided integration**: correct setup and usage patterns for the Node
+  (`@bunnyapp/api-client`) and Ruby (`bunny_app`) SDKs
+- **React components**: guided integration of `@bunnyapp/components`
+  (BillingDetails, Invoice, Signup, Subscriptions, Quote, Quotes, Transactions)
+- **Webhook handlers**: correct patterns for platform and workflow webhooks
+- **Lifecycle flows**: quote → apply → subscription; renewals, upgrades,
+  cancellation; invoices, payments, credit notes
+
+## Available skills
+
+| Skill | Covers |
+| --- | --- |
+| `bunny-graphql` | Direct GraphQL API: endpoint, auth, pagination, common operations |
+| `bunny-node-sdk` | `@bunnyapp/api-client` (Node / TypeScript) |
+| `bunny-ruby-sdk` | `bunny_app` gem (Ruby / Rails) |
+| `bunny-components` | `@bunnyapp/components` React library |
+| `bunny-webhooks` | Platform and workflow webhook handling |
+| `bunny-customer-portal` | Popup, standalone, and signup portal variants |
+| `bunny-catalog` | Products, plans, features, price lists, coupons |
+| `bunny-quoting` | Quote lifecycle (create → share → accept → apply) |
+| `bunny-subscriptions` | Subscription lifecycle: renewals, upgrades, cancellation, usage |
+| `bunny-billing` | Invoices, payments, credit notes, reconciliation |
+| `bunny-analytics` | MRR / ARR / churn, RevRec schedules, reporting exports |
+
+## Credential safety
+
+Every code sample in this toolkit reads tokens from environment variables. When
+integrating Bunny, **never** hardcode, log, or commit access tokens. Rotate
+tokens regularly and scope them to the minimum set of permissions you need.
+
+## Feedback
+
+Open an issue in this repository. For broader questions about Bunny's API, see
+[docs.bunny.com/developer](https://docs.bunny.com/developer).
+
+## Contributing
+
+This repo is maintained by the Bunny team. See [CONTRIBUTING.md](CONTRIBUTING.md) for the authoring rubric, skill shape, and PR conventions. External pull requests may be considered on a case-by-case basis — please open an issue first to discuss.

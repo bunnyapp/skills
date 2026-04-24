@@ -1,0 +1,15 @@
+{
+  "name": "bunny-plugin",
+  "description": "Bunny developer tools for GitHub Copilot / VS Code — search Bunny docs, generate and validate GraphQL, and integrate Bunny subscriptions and billing into your app",
+  "version": "0.1.0",
+  "author": { "name": "Bunny" },
+  "license": "MIT",
+  "keywords": [
+    "bunny",
+    "subscriptions",
+    "billing",
+    "graphql",
+    "mcp",
+    "agent-skills"
+  ]
+}
