@@ -1,6 +1,0 @@
-# Temporary lint-ignore for the two skills that will be replaced in PRs
-# #4 (replace-skill/bunny-components) and #10 (replace-skill/bunny-billing).
-# Richet's original files pre-date CI; our replacements are lint-clean.
-# Remove the corresponding lines when each replacement PR merges.
-bunny-billing/
-bunny-components/
