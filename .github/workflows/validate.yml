@@ -61,7 +61,7 @@ jobs:
         with:
           node-version: "20"
       - name: Run markdownlint
-        run: npx --yes markdownlint-cli "bunny-*/**/*.md" "template/**/*.md" "README.md" "CONTRIBUTING.md" "AGENTS.md" --disable MD013 MD033 MD041 --ignore-path .markdownlintignore
+        run: npx --yes markdownlint-cli "bunny-*/**/*.md" "template/**/*.md" "README.md" "CONTRIBUTING.md" "AGENTS.md" --disable MD013 MD033 MD041
 
   json-lint:
     name: JSON manifests
