@@ -1,193 +1,188 @@
 ---
 name: bunny-components
-description: This skill should be used when the user asks to "add a billing portal", "embed subscription management", "add Bunny components to React", "implement self-service billing in my app", "add a billing page", "let users manage their subscription", "show invoices in my app", "add a signup flow with Bunny", "embed Bunny billing UI", "add payment method management", "build a subscription management area", "build a subscription portal", "let users upgrade their plan", "let users change their subscription", "let users downgrade their plan", "let users cancel their subscription in my app", "let users pay their invoice in my app", "add a page where users can manage their billing", or any task where users should be able to upgrade, modify, or pay for their subscription inside the app using the @bunnyapp/components React library.
+description: Official React component library for Bunny — `@bunnyapp/components`. Embeddable UI for signup, subscription management, invoices, quotes, billing details, and transaction history. Covers installation, wrapping an app tree in `BunnyProvider` (required `apiHost` and — for any functional rendering — a `token` prop), generating portal session tokens server-side with the `portalSessionCreate` GraphQL mutation, the single-provider pattern across multiple components, CORS subdomain whitelisting, and the component catalogue (BillingDetails, Invoice, Signup, Subscriptions, Quote, Quotes, Transactions). Use when embedding Bunny billing UI into a React, Next.js, Remix, or Vite app. For the hosted (non-React) alternatives see `bunny-customer-portal`; for server-side SDKs see `bunny-node-sdk` and `bunny-ruby-sdk`.
 ---
 
-# Bunny React Components Integration
+# Bunny Components — `@bunnyapp/components`
 
-This skill guides embedding Bunny's pre-built React billing UI components (`@bunnyapp/components`) into a React application. These components allow users to self-service their subscriptions, update billing details, view invoices, manage payment methods, and sign up — all without leaving your app.
+Official React component library that embeds Bunny's signup, subscription,
+invoice, and portal UIs directly into your app. Each component is a drop-in
+view wrapped around Bunny's GraphQL API, requiring only a session token and
+your tenant's `apiHost`.
 
-## Installation
+Public docs: [docs.bunny.com/developer/bunny-components](https://docs.bunny.com/developer/bunny-components/bunny-components).
+Repo: published as `@bunnyapp/components` on npm.
 
-```bash
-npm install @bunnyapp/components
+> **Status**: the library is currently in a pre-1.0 beta (`1.8.0-beta.N` at
+> time of writing). Expect minor breaking changes between betas. Pin an exact
+> version in `package.json` and review changelog before bumping.
+
+## Credential safety
+
+- **Never expose API tokens to the browser.** The `token` prop passed to
+  `BunnyProvider` must be a **portal session token**, not an API access
+  token, when scoping to a single customer. Generate session tokens on your
+  server via `portalSessionCreate` and pass only that short-lived token to
+  the React tree.
+- **`<Signup />` is the exception** — it needs a separate, narrowly-scoped
+  token (`signup:read signup:write`) in its own `BunnyProvider`. A
+  portal-session token can't call the signup mutations. See "Checkout →
+  subscription" below.
+- API tokens are only appropriate when the integrator is the signed-in
+  admin viewing cross-account data in their own internal tool — and even
+  then they stay in server components or a signed cookie, not a public
+  JavaScript bundle.
+- Load server-side secrets from environment variables or your platform's
+  secret manager.
+
+## Install
+
+```sh
+npm install @bunnyapp/components --save
 ```
 
-The package requires React. Styling uses Tailwind CSS — components accept `className` and `shadow` props for customisation.
+Peer dependencies (ensure your app already uses compatible versions): React
+18, `@tanstack/react-query`, Ant Design, `@ant-design/icons`, Stripe JS
+(`@stripe/stripe-js` + `@stripe/react-stripe-js`), Font Awesome. The exact
+versions are in the package's `peerDependencies`.
 
-## Core Concept: BunnyProvider
+## Wrap your tree in a single `BunnyProvider`
 
-Every component must be a descendant of a single `BunnyProvider`. The provider manages shared state so that updates in one component (e.g. payment method saved in `BillingDetails`) are immediately reflected in others (e.g. `Subscriptions`).
+Mount **one** `BunnyProvider` above every Bunny component you render. It
+owns the API client, the query cache, and the session — mounting multiple
+providers creates state mismatches (stale caches, duplicate requests, lost
+mutations).
 
 ```tsx
-import { BunnyProvider, BillingDetails, Subscriptions, Transactions } from "@bunnyapp/components";
+import { BunnyProvider, Subscriptions, BillingDetails } from "@bunnyapp/components";
 
-function BillingPage() {
+export function BillingPage({ sessionToken }: { sessionToken: string }) {
   return (
-    <BunnyProvider token={portalSessionToken} apiHost="https://acme.bunny.com">
+    <BunnyProvider
+      token={sessionToken}
+      apiHost={process.env.NEXT_PUBLIC_BUNNY_API_HOST!} // https://<subdomain>.bunny.com
+    >
       <Subscriptions />
       <BillingDetails />
-      <Transactions />
     </BunnyProvider>
   );
 }
 ```
 
-**Do not** mount multiple `BunnyProvider` instances for normal billing components — state will not be shared and components will conflict.
-
-## Authentication: Choosing the Right Token
-
-Two token types are supported:
-
-| Token type | Scope | Use when |
-|---|---|---|
-| Portal session token | Single account | Authenticated user viewing their own billing |
-| API token | All accounts | Admin views, multi-tenant dashboards |
-
-**For customer-facing pages**, always use a portal session token. Generate one server-side using the Bunny SDK (see `bunny-billing` skill) and pass it to the client. Never expose API tokens to the browser.
-
-> **Important:** The server-side Bunny API client must include the `security:write` scope to call `portalSessionCreate`. Add it to the `scope` string during SDK initialisation:
->
-> ```typescript
-> // Node.js
-> const bunny = new Bunny({
->   baseUrl: process.env.BUNNY_BASE_URL,
->   clientId: process.env.BUNNY_CLIENT_ID,
->   clientSecret: process.env.BUNNY_CLIENT_SECRET,
->   scope: "standard:read standard:write security:write",
-> });
-> ```
-> ```ruby
-> # Ruby
-> BunnyApp.config do |c|
->   c.client_id     = ENV['BUNNY_CLIENT_ID']
->   c.client_secret = ENV['BUNNY_CLIENT_SECRET']
->   c.scope         = 'standard:read standard:write security:write'
->   c.base_uri      = ENV['BUNNY_BASE_URL']
-> end
-> ```
-> Without `security:write`, portal session token generation will fail with an authorization error.
+Anti-pattern (don't do this):
 
 ```tsx
-// Server: generate token (Node.js example)
-const token = await bunny.portalSessionCreate("acme-team", returnUrl, 4);
-
-// Client: pass to BunnyProvider
-<BunnyProvider token={token} apiHost="https://acme.bunny.com">
-  ...
-</BunnyProvider>
+// Wrong — each Provider builds its own state, caches drift apart.
+<BunnyProvider token={t} apiHost={h}><Subscriptions /></BunnyProvider>
+<BunnyProvider token={t} apiHost={h}><BillingDetails /></BunnyProvider>
 ```
 
-## CORS Setup
+In server-rendered apps (Next.js App Router, Remix, Nuxt), mint the token
+in the server layer (server component, loader, or API route) and hand it
+to a `"use client"` boundary as a prop — `BunnyProvider` has to run
+client-side. Don't render the token-minting page at build time; tokens
+are short-lived (default 24 h).
 
-Before components will work in the browser, whitelist the app's domain in the Bunny admin. Add `localhost` for development and the production domain for live environments. Failing to do this causes CORS errors.
+## Generate the session token server-side
 
-## Component Overview
+Mint the `token` prop server-side via `portalSessionCreate` — see the
+`bunny-node-sdk`, `bunny-ruby-sdk`, or `bunny-graphql` skill for the exact
+call in your language. One Bunny-specific scope rule applies regardless:
+
+> **The token-minting API client must hold `security:write`.**
+> `portalSessionCreate` is gated by Bunny's `SecurityPolicy`; a client
+> without `security:write` fails with an authorization error. This is
+> separate from — and in addition to — the standard `standard:read` /
+> `standard:write` scopes the rest of your integration uses.
+
+Portal session tokens default to 24 h expiry; pass an override if you need
+shorter. The `returnUrl` only controls the portal's "Back" link, not a
+post-action redirect.
+
+## CORS: whitelist your subdomains
+
+`BunnyProvider` makes XHR/fetch calls from the browser to `apiHost`. You
+must whitelist the subdomain(s) serving your app in Bunny's admin portal,
+otherwise every request fails CORS preflight. Include at minimum:
+
+- `http://localhost:3000` (or whatever port you run in development)
+- Your production origin, e.g. `https://app.example.com`
+
+Add staging and preview deployments (Vercel, Netlify preview URLs) as
+needed. Subdomain whitelisting lives in tenant settings; ask your Bunny
+admin to add them if you don't have access yourself.
+
+## Component catalogue
 
 | Component | Purpose |
-|---|---|
-| `<Subscriptions />` | View, upgrade, downgrade, and cancel subscriptions |
-| `<BillingDetails />` | Update billing address and payment methods |
-| `<Invoice id="..." />` | View and pay a specific invoice |
-| `<Transactions />` | List of invoices, payments, and refunds |
-| `<Quotes />` | List of outstanding quotes |
-| `<Quote />` | View and accept a specific quote |
-| `<Signup />` | Public-facing subscription signup flow |
+| --- | --- |
+| `Signup` | Sign up for a new subscription (handles plan selection, billing details, payment) |
+| `Subscriptions` | View, upgrade, downgrade, and cancel subscriptions |
+| `Quote` | Show a single quote and let the customer accept it |
+| `Quotes` | List view of quotes |
+| `Invoice` | Show a single invoice and collect payment |
+| `Transactions` | List invoices, payments, and refunds |
+| `BillingDetails` | Update account details, billing address, and payment methods |
 
-`<PaymentForm />` is for internal Bunny use — do not use it directly.
+Internal-use-only: `PaymentForm` — don't mount it directly, it's rendered by
+the user-facing components above.
 
-## Common Layout Patterns
+Each component reads the `token` and `apiHost` from its nearest
+`BunnyProvider`. Styling inherits from Ant Design's theme, so if your app
+already customises `ConfigProvider`, the Bunny components will pick that up.
 
-### Full Billing Portal Page
+## Signup has a separate scope model
 
-```tsx
-import { BunnyProvider, Subscriptions, BillingDetails, Transactions } from "@bunnyapp/components";
+`<Signup />` is the one component that does **not** run under a portal
+session token. It calls unauthenticated signup mutations
+(`quoteAccountSignup`, `accountSignup`, `quoteChangeAddCoupon`,
+`quoteChangeRemoveCoupon`, `quoteRecalculateTaxes`) which are only covered
+by the `signup:read` / `signup:write` scope aliases. A portal-session
+token — scoped to an existing account — cannot call them and fails with
+`Rejected by reach`.
 
-export function BillingPortal({ sessionToken }: { sessionToken: string }) {
-  return (
-    <BunnyProvider token={sessionToken} apiHost={process.env.NEXT_PUBLIC_BUNNY_HOST}>
-      <div className="max-w-4xl mx-auto py-8 space-y-6">
-        <Subscriptions />
-        <BillingDetails />
-        <Transactions />
-      </div>
-    </BunnyProvider>
-  );
-}
-```
+The signup `token` is an **OAuth2 access token** from a `signup:read
+signup:write`-scoped API client — *not* a portal session token. Mint it
+server-side via the OAuth2 client-credentials flow (`POST /oauth/token`
+with `grant_type=client_credentials`) documented in `bunny-graphql`, then
+pass the returned `access_token` string as the provider's `token` prop.
+Cache it for its `expires_in` window; rotate credentials infrequently.
+`@bunnyapp/api-client` does not publicly expose its internal access
+token — mint your own from the OAuth endpoint when you need a raw token
+string for this case.
 
-### Invoice Deep-Link Page
-
-```tsx
-import { BunnyProvider, Invoice } from "@bunnyapp/components";
-
-export function InvoicePage({ invoiceId, token }: { invoiceId: string; token: string }) {
-  return (
-    <BunnyProvider token={token} apiHost={process.env.NEXT_PUBLIC_BUNNY_HOST}>
-      <Invoice
-        id={invoiceId}
-        onPaymentSuccess={(usedSavedMethod) => {
-          console.log("Payment succeeded, saved method:", usedSavedMethod);
-        }}
-        onBackButtonClick={() => router.back()}
-        backButtonName="Back to billing"
-      />
-    </BunnyProvider>
-  );
-}
-```
-
-### Signup Page (Public — Separate Provider)
-
-The `<Signup />` component **must** use its own `BunnyProvider` with a token scoped to `signup:read signup:write` only. Never share a signup provider with billing components.
+Wrap the signup flow in its own `BunnyProvider`:
 
 ```tsx
 import { BunnyProvider, Signup } from "@bunnyapp/components";
 
-export function SignupPage() {
-  // Token generated server-side with signup:read signup:write scopes only
-  const signupToken = process.env.NEXT_PUBLIC_BUNNY_SIGNUP_TOKEN;
-
-  return (
-    <BunnyProvider token={signupToken} apiHost={process.env.NEXT_PUBLIC_BUNNY_HOST}>
-      <Signup
-        companyName="Acme"
-        entityId="1"
-        priceListCode="business-monthly"
-        returnUrl="https://acme.com/dashboard"
-      />
-    </BunnyProvider>
-  );
-}
+// signupToken = access_token from a signup:read signup:write client
+// via /oauth/token. NOT the portal-session token used elsewhere.
+<BunnyProvider token={signupToken} apiHost={apiHost}>
+  <Signup
+    priceListCode="starter-annual"       // preselect a plan
+    onSuccess={(subscription) => {
+      // Post-signup redirect target — the component won't navigate for you.
+      // <Signup /> uses `onSuccess`, NOT `returnUrl` (which is portal-only).
+    }}
+  />
+</BunnyProvider>
 ```
 
-## Setup Checklist
+Alternatively, use the hosted signup page (`bunny-customer-portal`) instead
+of the embedded `Signup` component — the hosted flow is easier when you
+don't need to wrap Bunny's UI inside your own layout.
 
-When integrating Bunny components, always present the following as a numbered list of **manual steps the user must complete**. Do not skip the environment variable step — call it out explicitly, list each variable, and make clear these must be set before the components will work.
+Every other component (Subscriptions, BillingDetails, Transactions, Quote,
+Quotes, Invoice) follows the same shape: render one or more under the
+portal-session `BunnyProvider` and the component handles its own queries,
+mutations, and state.
 
-1. **Set up environment variables** — the user must configure these manually:
-   ```
-   NEXT_PUBLIC_BUNNY_HOST=https://<subdomain>.bunny.com   # exposed to browser; safe for public env vars
-   ```
-   If using the `<Signup />` component, also add:
-   ```
-   NEXT_PUBLIC_BUNNY_SIGNUP_TOKEN=<signup-scoped-token>   # token with signup:read signup:write scopes only
-   ```
-   Portal session tokens for authenticated billing pages are generated server-side at runtime (not stored as env vars) — see the `bunny-billing` skill for how to generate them.
-2. **Whitelist your domain in the Bunny admin** — required to avoid CORS errors. Add `localhost` for development and your production domain for live environments.
-3. **Install the package**: `npm install @bunnyapp/components`
+## References
 
-## Key Rules
+- [docs.bunny.com/developer/bunny-components](https://docs.bunny.com/developer/bunny-components/bunny-components) — official docs
+- Sibling skills: `bunny-customer-portal` (hosted UI, non-React), `bunny-node-sdk`, `bunny-ruby-sdk`, `bunny-graphql` (server-side token generation), `bunny-quoting` (quote lifecycle behind `Quote`)
 
-1. **One BunnyProvider per billing context** — all normal components share a single provider.
-2. **Signup always gets its own provider** — and a narrowly-scoped token.
-3. **Generate portal session tokens server-side** — never expose Bunny client secrets to the browser.
-4. **Whitelist domains in Bunny admin** — required to avoid CORS errors.
-5. **`className` and `shadow` props** accept Tailwind CSS classes for styling.
+---
 
-## Additional Resources
-
-- **`references/components.md`** — All component props with types and defaults
-- **`references/setup.md`** — Token generation, CORS whitelisting, Next.js / Vite integration patterns
-
-For server-side token generation, see the `bunny-billing` skill.
+Last verified against @bunnyapp/components v1.8.0-beta.19 and bunnyapp/api release 2026-04-21-1
