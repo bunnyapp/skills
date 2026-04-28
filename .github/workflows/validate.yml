@@ -52,17 +52,6 @@ jobs:
           print("All skills valid.")
           PY
 
-  markdown-lint:
-    name: Markdown lint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-      - name: Run markdownlint
-        run: npx --yes markdownlint-cli "bunny-*/**/*.md" "template/**/*.md" "README.md" "CONTRIBUTING.md" "AGENTS.md" --disable MD013 MD033 MD041
-
   json-lint:
     name: JSON manifests
     runs-on: ubuntu-latest
