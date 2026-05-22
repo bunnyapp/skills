@@ -14,6 +14,8 @@ Bunny sends HTTP POST webhooks to URLs you configure. Two flavours:
 
 Public docs: [docs.bunny.com/developer/webhooks](https://docs.bunny.com/developer/webhooks/webhooks).
 
+> **Platform webhooks fire only when "Provisioning enabled" is toggled on for the Platform.** Setting a webhook URL and auth token is not enough on its own — without the toggle, no request is sent. If you're testing a platform webhook and seeing zero traffic at your endpoint, this is almost always the cause.
+
 ## Credential safety
 
 - Store the **signing key** / **auth token** for each webhook endpoint in
