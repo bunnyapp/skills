@@ -19,8 +19,9 @@ jobs:
           import re, sys, yaml, pathlib
           DESCRIPTION_MAX = 1024
           errors = []
-          # Skills live at the top level (e.g. bunny-graphql/SKILL.md).
-          for skill_dir in sorted(pathlib.Path(".").glob("bunny-*/")):
+          # Skills live under skills/ (e.g. skills/bunny-graphql/SKILL.md), per the
+          # Agent Plugins spec: each immediate child of skills/ holding a SKILL.md.
+          for skill_dir in sorted(pathlib.Path("skills").glob("*/")):
               if not skill_dir.is_dir():
                   continue
               name = skill_dir.name
@@ -64,6 +65,129 @@ jobs:
             python3 -c "import json,sys; json.load(open('$f'))"
           done
 
+  agent-plugin:
+    name: Agent Plugins spec conformance
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate plugin.json and mcp.json against Agent Plugins 1.0.0
+        run: |
+          python3 - <<'PY'
+          import json, re, sys, pathlib
+
+          SPEC = "https://agent-plugins.org/schemas/1.0.0"
+          errors = []
+
+          def load(path):
+              try:
+                  return json.loads(pathlib.Path(path).read_text())
+              except Exception as exc:
+                  errors.append(f"{path}: {exc}")
+                  return None
+
+          # --- plugin.json -------------------------------------------------
+          # Schema is additionalProperties:false, so an unknown top-level key
+          # is fatal to the whole plugin. Client-specific data belongs under
+          # "extensions", keyed by reverse-domain namespace.
+          ALLOWED = {"$schema", "name", "version", "description", "author",
+                     "homepage", "repository", "license", "keywords", "extensions"}
+          AUTHOR_ALLOWED = {"name", "email", "url"}
+          NAME_RE = re.compile(r"^(?!.*(?:--|\.\.))[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$")
+
+          p = load("plugin.json")
+          if p is not None:
+              if p.get("$schema") != f"{SPEC}/plugin.schema.json":
+                  errors.append("plugin.json: $schema is required and must be "
+                                f"{SPEC}/plugin.schema.json")
+              name = p.get("name")
+              if not name:
+                  errors.append("plugin.json: 'name' is required")
+              elif not NAME_RE.match(name) or len(name) > 64:
+                  errors.append(f"plugin.json: name '{name}' violates the spec pattern")
+              for key in sorted(set(p) - ALLOWED):
+                  errors.append(f"plugin.json: unknown top-level key '{key}' "
+                                "(additionalProperties is false — move it under 'extensions')")
+              author = p.get("author")
+              if isinstance(author, dict):
+                  for key in sorted(set(author) - AUTHOR_ALLOWED):
+                      errors.append(f"plugin.json: unknown author key '{key}'")
+              ext = p.get("extensions", {})
+              for ns, val in ext.items():
+                  if "." not in ns:
+                      errors.append(f"plugin.json: extensions key '{ns}' is not a reverse-domain namespace")
+                  if not isinstance(val, dict):
+                      errors.append(f"plugin.json: extensions['{ns}'] must be an object")
+
+          # --- mcp.json ----------------------------------------------------
+          m = load("mcp.json")
+          if m is not None:
+              if m.get("$schema") != f"{SPEC}/mcp.schema.json":
+                  errors.append(f"mcp.json: $schema must be {SPEC}/mcp.schema.json")
+              servers = m.get("mcpServers")
+              if not isinstance(servers, dict) or not servers:
+                  errors.append("mcp.json: 'mcpServers' must be a non-empty object")
+              else:
+                  for sname, s in servers.items():
+                      t = s.get("type")
+                      if t not in ("stdio", "streamable-http", "sse"):
+                          errors.append(f"mcp.json: server '{sname}' needs an explicit "
+                                        "type of stdio | streamable-http | sse")
+                      elif t == "stdio":
+                          if not s.get("command"):
+                              errors.append(f"mcp.json: stdio server '{sname}' needs 'command'")
+                          cwd = s.get("cwd")
+                          if cwd and not (cwd.startswith("./") or cwd.startswith("${PLUGIN_")):
+                              errors.append(f"mcp.json: server '{sname}' cwd must be plugin-relative (./…)")
+                      else:
+                          url = s.get("url", "")
+                          if not url.startswith(("http://", "https://")) or "#" in url:
+                              errors.append(f"mcp.json: server '{sname}' needs an absolute "
+                                            "http(s) 'url' with no fragment")
+
+          # --- .mcp.json mirror --------------------------------------------
+          # Claude Code discovers MCP config at the fixed name .mcp.json; the spec
+          # uses mcp.json. Both ship, so they must not drift.
+          mirror = pathlib.Path(".mcp.json")
+          if not mirror.exists():
+              errors.append(".mcp.json missing (Claude Code reads this fixed name)")
+          elif load(".mcp.json") != m:
+              errors.append(".mcp.json and mcp.json have drifted — keep them identical")
+
+          # --- gemini-extension.json mirror ---------------------------------
+          # Gemini CLI reads skills/ like the spec, but takes MCP config inline
+          # from its own manifest and has no 'type' field. Compare the rest.
+          g = load("gemini-extension.json")
+          if g is not None and m is not None:
+              want = {k: {kk: vv for kk, vv in v.items() if kk != "type"}
+                      for k, v in (m.get("mcpServers") or {}).items()}
+              got = g.get("mcpServers") or {}
+              if got != want:
+                  errors.append("gemini-extension.json mcpServers drifted from mcp.json "
+                                f"(expected {json.dumps(want, sort_keys=True)})")
+
+          # --- skills/ discovery -------------------------------------------
+          skills = pathlib.Path("skills")
+          if not skills.is_dir():
+              errors.append("skills/ directory missing — the spec discovers skills only there")
+          else:
+              found = [d for d in skills.iterdir() if d.is_dir() and (d / "SKILL.md").exists()]
+              if not found:
+                  errors.append("skills/ contains no immediate child with a SKILL.md")
+              # Clients MUST NOT recurse deeper, so a nested SKILL.md is invisible.
+              for d in skills.iterdir():
+                  if d.is_dir() and not (d / "SKILL.md").exists():
+                      deep = list(d.rglob("SKILL.md"))
+                      if deep:
+                          errors.append(f"{d}: SKILL.md is nested at {deep[0]} — clients do not "
+                                        "recurse below skills/<name>/")
+              print(f"Discovered {len(found)} skills.")
+
+          if errors:
+              print("\n".join(errors))
+              sys.exit(1)
+          print("Agent Plugins 1.0.0 conformance OK.")
+          PY
+
   secret-scan:
     name: Secret scan (skill examples)
     runs-on: ubuntu-latest
@@ -78,7 +202,7 @@ jobs:
               -e 'Bearer [A-Za-z0-9_\-]{24,}' \
               -e 'AKIA[0-9A-Z]{16}' \
               -e '"(sk|pk|xoxb)_[A-Za-z0-9]{20,}"' \
-              bunny-*/ template/ README.md CONTRIBUTING.md AGENTS.md 2>/dev/null \
+              skills/ template/ README.md CONTRIBUTING.md AGENTS.md MCP.md 2>/dev/null \
             | grep -Ev 'Bearer \$|Bearer <|Bearer \{|Bearer YOUR_|env\.|process\.env|ENV\[|os\.getenv' ; then
             echo "::error::Possible hardcoded secret in skill content. Use env vars or placeholders."
             exit 1

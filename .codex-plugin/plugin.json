@@ -1,29 +1,31 @@
 {
   "name": "bunny-plugin",
-  "version": "0.1.0",
-  "description": "Bunny developer tools for OpenAI Codex — search Bunny docs, generate and validate GraphQL, and integrate Bunny subscriptions and billing into your app",
+  "version": "0.2.0",
+  "description": "Bunny for OpenAI agents — operate a live Bunny billing account through MCP tools, plus developer skills for docs, GraphQL and SDK integration",
   "author": { "name": "Bunny" },
   "homepage": "https://docs.bunny.com/developer",
   "repository": "https://github.com/bunnyapp/skills",
   "license": "MIT",
-  "keywords": ["bunny", "subscriptions", "billing", "graphql", "agent-skills"],
-  "skills": "./",
+  "keywords": ["bunny", "subscriptions", "billing", "graphql", "mcp", "agent-skills"],
+  "skills": "./skills",
+  "mcpServers": "./mcp.json",
   "interface": {
     "displayName": "Bunny",
-    "shortDescription": "Search Bunny docs, validate GraphQL, and integrate subscriptions and billing faster.",
-    "longDescription": "Search live Bunny documentation, generate and validate GraphQL queries against Bunny's API, and get guided integrations for the Node and Ruby SDKs, the @bunnyapp/components React library, webhooks, the customer portal, and the subscription/quote/invoice lifecycle — all without leaving your workflow.",
+    "shortDescription": "Run your Bunny billing account from chat — customers, subscriptions, quotes, invoices and revenue.",
+    "longDescription": "Connect your Bunny account and work with it directly: look up customers and subscriptions, answer revenue questions like MRR, churn and retention, preview the next invoice, build products and pricing, and raise quotes to change or cancel a subscription. Also includes the developer skills — searching live Bunny documentation, generating and validating GraphQL, and guided integrations for the Node and Ruby SDKs, the @bunnyapp/components React library, webhooks and the customer portal.",
     "developerName": "Bunny",
     "category": "Productivity",
-    "capabilities": ["Read"],
+    "capabilities": ["Read", "Write"],
     "logo": "./assets/bunny_glyph.svg",
     "composerIcon": "./assets/bunny_glyph.svg",
     "brandColor": "#FF5833",
     "websiteURL": "https://docs.bunny.com/developer",
     "defaultPrompt": [
-      "Create a Bunny subscription for a customer using the Node SDK",
-      "Handle a Bunny webhook event in Express",
-      "Add a Bunny checkout page to my Next.js app using @bunnyapp/components",
-      "Validate my GraphQL mutation against the Bunny schema"
+      "Which of my customers have invoices more than 90 days overdue?",
+      "What was our MRR last quarter, and what drove the change?",
+      "Give Acme Corp 20% off their Enterprise subscription",
+      "What will Acme be invoiced next month?",
+      "Set up a new product with a monthly plan at $50 per seat"
     ]
   }
 }
