@@ -6,7 +6,7 @@ We follow the conventions established by [anthropics/skills](https://github.com/
 
 ## Skill shape
 
-Every skill is a single `<name>/SKILL.md` file at the repo root (no `skills/` wrapper directory — we follow the existing `bunnyapp/skills` layout).
+Every skill is a single `skills/<name>/SKILL.md` file. The location is fixed by the [Agent Plugins](https://agent-plugins.org) spec: hosts discover skills only as immediate children of `skills/`, and do not recurse deeper — so a `SKILL.md` nested any further is silently invisible.
 
 ```yaml
 ---

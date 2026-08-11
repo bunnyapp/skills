@@ -20,5 +20,5 @@ jobs:
             --accept 200,203,204,206,429
             --exclude-mail
             --exclude 'https?://(localhost|127\.0\.0\.1|<subdomain>\.bunny\.com|example\.bunny\.com)'
-            skills/**/*.md template/*.md README.md
+            skills/**/*.md template/*.md README.md AGENTS.md CONTRIBUTING.md MCP.md
           fail: true

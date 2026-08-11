@@ -8,5 +8,11 @@
 *                         @bunny-rich @christianbpedersen @tbpeders @bunnifaccio
 
 # Skills originally authored by @bunny-rich — he remains the primary reviewer.
-/bunny-billing/           @bunny-rich
-/bunny-components/        @bunny-rich
+/skills/bunny-billing/    @bunny-rich
+/skills/bunny-components/ @bunny-rich
+
+# Plugin packaging: the manifests and layout that make this repo a valid
+# Agent Plugin. A wrong key in plugin.json is fatal to the whole plugin.
+/plugin.json              @bunny-rich
+/mcp.json                 @bunny-rich
+/.mcp.json                @bunny-rich

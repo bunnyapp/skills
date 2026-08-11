@@ -1,8 +1,11 @@
 {
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "bunny-plugin",
-  "description": "Bunny developer tools for GitHub Copilot / VS Code — search Bunny docs, generate and validate GraphQL, and integrate Bunny subscriptions and billing into your app",
-  "version": "0.1.0",
-  "author": { "name": "Bunny" },
+  "version": "0.2.0",
+  "description": "Bunny for AI agents — operate a live Bunny billing account through MCP tools, plus developer skills for docs, GraphQL and SDK integration",
+  "author": { "name": "Bunny", "url": "https://bunny.com" },
+  "homepage": "https://docs.bunny.com/developer",
+  "repository": "https://github.com/bunnyapp/skills",
   "license": "MIT",
   "keywords": [
     "bunny",
