@@ -1,7 +1,7 @@
-# Bunny AI Toolkit
+# Bunny Agent Plugin
 
-Connect your AI assistant to Bunny. The toolkit is an [Agent Plugin](https://agent-plugins.org)
-bundling two things:
+Connect your AI assistant to Bunny. This repository is an
+[Agent Plugin](https://agent-plugins.org) (spec 1.0) bundling two things:
 
 - **Developer skills** — Bunny's GraphQL API, the official Node and Ruby SDKs,
   the `@bunnyapp/components` React library, webhooks, and the customer portal.
@@ -141,7 +141,7 @@ Each lives at `skills/<name>/SKILL.md`.
 
 ## Credential safety
 
-Every code sample in this toolkit reads tokens from environment variables. When
+Every code sample in this plugin reads tokens from environment variables. When
 integrating Bunny, **never** hardcode, log, or commit access tokens. Rotate
 tokens regularly and scope them to the minimum set of permissions you need.
 
