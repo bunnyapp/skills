@@ -154,12 +154,20 @@ jobs:
               errors.append(".mcp.json and mcp.json have drifted — keep them identical")
 
           # --- gemini-extension.json mirror ---------------------------------
-          # Gemini CLI reads skills/ like the spec, but takes MCP config inline
-          # from its own manifest and has no 'type' field. Compare the rest.
+          # Gemini CLI takes MCP config inline from its own manifest and names the
+          # transports differently: no 'type' field, streamable HTTP is 'httpUrl',
+          # SSE is 'url', stdio is command/args. Compare endpoint for endpoint.
+          def gemini_shape(spec):
+              t = spec.get("type")
+              if t == "streamable-http":
+                  return {"httpUrl": spec.get("url")}
+              if t == "sse":
+                  return {"url": spec.get("url")}
+              return {k: v for k, v in spec.items() if k in ("command", "args", "env", "cwd")}
+
           g = load("gemini-extension.json")
           if g is not None and m is not None:
-              want = {k: {kk: vv for kk, vv in v.items() if kk != "type"}
-                      for k, v in (m.get("mcpServers") or {}).items()}
+              want = {k: gemini_shape(v) for k, v in (m.get("mcpServers") or {}).items()}
               got = g.get("mcpServers") or {}
               if got != want:
                   errors.append("gemini-extension.json mcpServers drifted from mcp.json "

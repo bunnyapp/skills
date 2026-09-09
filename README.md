@@ -74,17 +74,23 @@ npx skills add bunnyapp/skills --skill <skill-name>
 ## Connect your Bunny account
 
 Installing the plugin gives you the skills. The MCP tools — everything that
-reads or changes real data — need one more step, because **Bunny's MCP endpoint
-is per account**:
+reads or changes real data — need you to authenticate once, against a single
+endpoint that is the same for every account:
 
 ```text
-https://<your-subdomain>.bunny.com/api/mcp
+https://auth.bunny.com/api/mcp
 ```
 
-There is no shared host, so the URL shipped in `mcp.json` is a placeholder.
-Replace `YOUR-SUBDOMAIN` with your own, and create an API client in Bunny under
-**Settings → API Clients** to authenticate. Full walkthrough, including the
-OAuth redirect URI that most often trips people up, is in [MCP.md](MCP.md).
+That URL ships working in `mcp.json`, so for most clients there is nothing to
+edit. The server supports **dynamic client registration**, so a client that
+speaks it enrols itself and takes you straight to the Bunny login and consent
+screen — no API client to create, no client ID or secret to copy, no redirect
+URI to pre-register. Your account is carried by the token you consent with,
+which is why the URL needs no subdomain.
+
+Hosts that still want a client ID and secret typed in are covered in
+[MCP.md](MCP.md), along with the OAuth redirect URI that most often trips people
+up.
 
 Without this step the developer skills still work; the operator skills have no
 tools to call.

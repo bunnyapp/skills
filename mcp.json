@@ -2,9 +2,8 @@
   "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
   "mcpServers": {
     "bunny": {
-      "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "mcp-remote", "https://YOUR-SUBDOMAIN.bunny.com/api/mcp"]
+      "type": "streamable-http",
+      "url": "https://auth.bunny.com/api/mcp"
     }
   }
 }

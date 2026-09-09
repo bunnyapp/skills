@@ -1,0 +1,2 @@
+[mcp_servers.bunny]
+url = "https://auth.bunny.com/api/mcp"
