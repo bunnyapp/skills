@@ -1,0 +1,61 @@
+name: Sync components skill
+
+on:
+  schedule:
+    - cron: "0 6 * * *" # daily, 06:00 UTC
+  workflow_dispatch:
+    inputs:
+      dist_tag:
+        description: "npm dist-tag of @bunnyapp/components to sync from (use beta for testing)"
+        required: false
+        default: latest
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    name: Mirror bunny-components skill from npm
+    runs-on: ubuntu-latest
+    env:
+      DIST_TAG: ${{ inputs.dist_tag || 'latest' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Pack and extract @bunnyapp/components
+        id: pack
+        run: |
+          set -euo pipefail
+          tmp="$(mktemp -d)"
+          cd "$tmp"
+          npm pack "@bunnyapp/components@${DIST_TAG}" --silent
+          tar -xzf ./*.tgz
+          version="$(node -p "require('./package/package.json').version")"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          if [ -f package/skills/bunny-components/SKILL.md ]; then
+            cp package/skills/bunny-components/SKILL.md "$GITHUB_WORKSPACE/skills/bunny-components/SKILL.md"
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::@bunnyapp/components@${version} (${DIST_TAG}) does not ship skills/bunny-components/SKILL.md; nothing to sync."
+          fi
+
+      - name: Open or update PR
+        if: steps.pack.outputs.found == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: sync/components-skill
+          add-paths: skills/bunny-components/SKILL.md
+          commit-message: "Sync bunny-components skill from @bunnyapp/components@${{ steps.pack.outputs.version }}"
+          title: "Sync bunny-components skill from @bunnyapp/components@${{ steps.pack.outputs.version }}"
+          body: |
+            Automated mirror of `skills/bunny-components/SKILL.md` from the
+            `@bunnyapp/components@${{ steps.pack.outputs.version }}` npm package (dist-tag `${{ env.DIST_TAG }}`).
+
+            Source of truth: `skills/bunny-components/SKILL.md` in bunnyapp/components. Do not edit here.
+          delete-branch: true
