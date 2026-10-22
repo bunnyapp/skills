@@ -4,6 +4,7 @@
   "version": "0.2.0",
   "author": { "name": "Bunny" },
   "license": "MIT",
+  "privacyPolicyUrl": "https://bunny.com/privacy/",
   "keywords": [
     "bunny",
     "subscriptions",
