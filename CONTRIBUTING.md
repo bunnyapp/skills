@@ -44,6 +44,10 @@ No `references/*.md` sub-files. Agents load the whole SKILL.md on activation; fr
 - Target **200–500 lines**. Shorter is fine for narrow skills; longer means you're cataloguing instead of teaching.
 - Every skill ends with `Last verified against bunnyapp/api release YYYY-MM-DD-N`.
 
+### Mirrored skill: `bunny-components`
+
+`skills/bunny-components/SKILL.md` is mirrored from the `@bunnyapp/components` npm package (source: `skills/bunny-components/SKILL.md` in the bunnyapp/components repo) by the `sync-components-skill` workflow, which opens a PR when the published file changes. Edit it there, not here; local edits will be overwritten.
+
 ## Teach patterns, not method catalogues
 
 Every SKILL.md teaches the integrator-facing **contract** — auth, scope reach, preconditions, error-shape quirks, canonical-flow composition — not an exhaustive list of SDK helpers or schema fields.
