@@ -3,7 +3,7 @@
   "description": "Bunny for Cursor — operate a live Bunny billing account through MCP tools: customers, subscriptions, quotes, invoices, revenue and pricing",
   "version": "0.2.0",
   "author": { "name": "Bunny" },
-  "logo": "../assets/bunny_glyph.svg",
+  "logo": "../assets/icon.png",
   "homepage": "https://docs.bunny.com/developer",
   "repository": "https://github.com/bunnyapp/skills",
   "license": "MIT",

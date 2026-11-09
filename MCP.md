@@ -56,13 +56,18 @@ Everything after that is discovered automatically.
 The server speaks **streamable HTTP**: `POST` for JSON-RPC, `GET` to open the server-initiated SSE
 stream, `DELETE` to end a session. Clients connect to the URL directly — no local bridge process.
 
-Hosts spell the same thing differently. This repo ships all four:
+Hosts spell the same thing differently. This repo ships three:
 
 ```jsonc
-// mcp.json and .mcp.json — Agent Plugins spec, and Claude Code, which
-// accepts "streamable-http" as an alias for its own "http"
-{ "mcpServers": { "bunny": {
+// mcp.json — Agent Plugins spec
+{ "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+  "mcpServers": { "bunny": {
     "type": "streamable-http",
+    "url": "https://auth.bunny.com/api/mcp" } } }
+
+// .mcp.json — Claude Code: remote transport is "http", no $schema
+{ "mcpServers": { "bunny": {
+    "type": "http",
     "url": "https://auth.bunny.com/api/mcp" } } }
 
 // gemini-extension.json — Gemini CLI: httpUrl is streamable HTTP,
@@ -70,8 +75,9 @@ Hosts spell the same thing differently. This repo ships all four:
 { "mcpServers": { "bunny": { "httpUrl": "https://auth.bunny.com/api/mcp" } } }
 ```
 
-```toml
-# .codex/config.toml — Codex picks the HTTP transport from `url` alone
+Codex reads `mcp.json` through `.codex-plugin/plugin.json`. To add the server to Codex by hand:
+
+```text
 [mcp_servers.bunny]
 url = "https://auth.bunny.com/api/mcp"
 ```
