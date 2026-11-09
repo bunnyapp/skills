@@ -144,14 +144,33 @@ jobs:
                               errors.append(f"mcp.json: server '{sname}' needs an absolute "
                                             "http(s) 'url' with no fragment")
 
-          # --- .mcp.json mirror --------------------------------------------
-          # Claude Code discovers MCP config at the fixed name .mcp.json; the spec
-          # uses mcp.json. Both ship, so they must not drift.
-          mirror = pathlib.Path(".mcp.json")
-          if not mirror.exists():
-              errors.append(".mcp.json missing (Claude Code reads this fixed name)")
-          elif load(".mcp.json") != m:
-              errors.append(".mcp.json and mcp.json have drifted — keep them identical")
+          # --- .mcp.json (Claude Code) -------------------------------------
+          # Claude Code reads .mcp.json in its own dialect: no $schema, and the
+          # remote transport is "http". The plugin directory refuses fields
+          # Claude Code does not read, so this file is not a copy of mcp.json —
+          # it must carry the same servers, translated, and nothing else.
+          CLAUDE_SERVER_KEYS = {"type", "url", "headers", "timeout", "alwaysLoad",
+                                "oauth", "name", "title", "displayName", "description",
+                                "command", "args", "env", "cwd"}
+          def claude_shape(spec):
+              t = spec.get("type")
+              if t == "streamable-http":
+                  return {"type": "http", "url": spec.get("url")}
+              if t == "sse":
+                  return {"type": "sse", "url": spec.get("url")}
+              return {k: v for k, v in spec.items() if k in ("command", "args", "env", "cwd")}
+
+          c = load(".mcp.json")
+          if c is not None and m is not None:
+              for key in sorted(set(c) - {"mcpServers"}):
+                  errors.append(f".mcp.json: top-level key '{key}' is not read by Claude Code")
+              for sname, s in (c.get("mcpServers") or {}).items():
+                  for key in sorted(set(s) - CLAUDE_SERVER_KEYS):
+                      errors.append(f".mcp.json: server '{sname}' key '{key}' is not read by Claude Code")
+              want = {k: claude_shape(v) for k, v in (m.get("mcpServers") or {}).items()}
+              if c.get("mcpServers") != want:
+                  errors.append(".mcp.json mcpServers drifted from mcp.json "
+                                f"(expected {json.dumps(want, sort_keys=True)})")
 
           # --- gemini-extension.json mirror ---------------------------------
           # Gemini CLI takes MCP config inline from its own manifest and names the

@@ -20,7 +20,7 @@ bunnyapp/skills/                 # ← this directory IS the plugin root
 │   └── <skill-name>/SKILL.md    # One per skill (e.g. skills/bunny-agent-tools/SKILL.md)
 ├── assets/                      # Logo and marketplace screenshots
 │
-├── .mcp.json                    # Claude Code reads this fixed name; mirrors mcp.json
+├── .mcp.json                    # Claude Code's MCP config: same servers as mcp.json, Claude's dialect
 ├── .claude-plugin/              # Claude Code plugin + marketplace manifests
 ├── .cursor-plugin/              # Cursor plugin + marketplace manifests
 ├── .codex-plugin/               # OpenAI Codex plugin manifest
@@ -44,7 +44,8 @@ bunnyapp/skills/                 # ← this directory IS the plugin root
 - **Skills live in `skills/<name>/SKILL.md`.** The spec discovers skills only at that fixed location, and clients **must not** recurse deeper — a `SKILL.md` nested any further is invisible. (They lived at the top level until v0.2.0.)
 - **`plugin.json` is closed.** Its schema sets `additionalProperties: false` and a violation is fatal to the *entire* plugin, not just one component. The only permitted keys are `$schema`, `name`, `version`, `description`, `author`, `homepage`, `repository`, `license`, `keywords`, `extensions`. Anything client-specific goes under `extensions`, keyed by reverse-domain namespace, or into that client's own directory.
 - **Every `mcp.json` server entry declares `type`** (`stdio`, `streamable-http`, or `sse`). Plugin-relative paths must start with `./` and resolve inside the plugin root.
-- **`mcp.json` and `.mcp.json` must stay identical.** The spec names the file `mcp.json`; Claude Code discovers `.mcp.json`. Both ship, and CI fails if they drift.
+- **`.mcp.json` carries the same servers as `mcp.json`, in Claude Code's dialect.** No `$schema`, and the remote transport is `"type": "http"`, not `streamable-http`. The Claude plugin directory refuses any field Claude Code does not read, so `.mcp.json` must not be a copy of `mcp.json`. CI checks the two agree.
+- **Only Markdown, text, JSON, YAML and PNG/JPEG/GIF/WebP/ICO files.** The Claude plugin directory refuses anything else (TOML, SVG, scripts, package-manager config) from unverified organisations. Logos use `assets/icon.png`.
 
 ## How to work in this repo
 
@@ -75,7 +76,7 @@ This repo has no runtime. It's Markdown + JSON manifests. `npm install` does not
 
 Every PR runs:
 
-- `validate.yml`: YAML frontmatter parse, `name` ↔ directory match, description ≤ 1024 chars, JSON manifest parse, Agent Plugins 1.0.0 conformance (manifest keys, MCP server types, `.mcp.json` mirror, skill discoverability), secret scan
+- `validate.yml`: YAML frontmatter parse, `name` ↔ directory match, description ≤ 1024 chars, JSON manifest parse, Agent Plugins 1.0.0 conformance (manifest keys, MCP server types, `.mcp.json` agreement, skill discoverability), secret scan
 - `link-check.yml`: weekly cron HEAD every external URL; opens an issue on 4xx/5xx
 
 If `validate.yml` fails, read the error and fix locally before re-pushing. See `CONTRIBUTING.md` for the exact commands to run the same checks on your machine.

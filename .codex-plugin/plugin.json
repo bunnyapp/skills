@@ -16,8 +16,8 @@
     "developerName": "Bunny",
     "category": "Productivity",
     "capabilities": ["Read", "Write"],
-    "logo": "./assets/bunny_glyph.svg",
-    "composerIcon": "./assets/bunny_glyph.svg",
+    "logo": "./assets/icon.png",
+    "composerIcon": "./assets/icon.png",
     "brandColor": "#FF5833",
     "websiteURL": "https://docs.bunny.com/developer",
     "defaultPrompt": [
