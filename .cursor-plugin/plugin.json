@@ -1,6 +1,6 @@
 {
   "name": "bunny-plugin",
-  "description": "Bunny developer tools for Cursor — search Bunny docs, generate and validate GraphQL, and integrate Bunny subscriptions and billing into your app",
+  "description": "Bunny for Cursor — operate a live Bunny billing account through MCP tools: customers, subscriptions, quotes, invoices, revenue and pricing",
   "version": "0.2.0",
   "author": { "name": "Bunny" },
   "logo": "../assets/bunny_glyph.svg",
@@ -11,7 +11,7 @@
     "bunny",
     "subscriptions",
     "billing",
-    "graphql",
+    "revenue",
     "mcp",
     "agent-skills"
   ]

@@ -1,7 +1,7 @@
 {
   "name": "bunny-plugin",
   "version": "0.2.0",
-  "description": "Bunny for AI agents — operate a live Bunny billing account through MCP tools, plus developer skills for docs, GraphQL and SDK integration",
+  "description": "Bunny for AI agents — operate a live Bunny billing account through MCP tools: customers, subscriptions, quotes, invoices, revenue and pricing",
   "mcpServers": {
     "bunny": {
       "httpUrl": "https://auth.bunny.com/api/mcp"

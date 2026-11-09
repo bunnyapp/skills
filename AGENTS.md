@@ -4,9 +4,9 @@ This file orients coding agents (Claude Code, Cursor, Codex, Gemini CLI, VS Code
 
 ## What this repo is
 
-`bunnyapp/skills` ships **agent skills** for integrating [Bunny](https://bunny.com) — the subscription billing platform — into third-party apps. Each skill is a Markdown file that teaches an agent how to use one part of Bunny's API, SDK, or UI library. When an integrator asks an agent to do something Bunny-related, the right skill activates and the agent gets domain-specific guidance.
+`bunnyapp/skills` is the **Bunny Agent Plugin**: the [Bunny](https://bunny.com) MCP server plus the agent skills that teach an agent to operate a live Bunny billing account through its tools — reading data, making changes through quotes, and giving RevOps advice. When a user asks about their customers, subscriptions, invoices or revenue, the right skill activates and the agent gets domain-specific guidance.
 
-This repo is **not** the Bunny API source code — it's distribution metadata for AI tools. For Bunny's actual API, see the [bunnyapp/bunny-node](https://github.com/bunnyapp/bunny-node) SDK, the [bunnyapp/bunny-ruby](https://github.com/bunnyapp/bunny-ruby) gem, and [docs.bunny.com/developer](https://docs.bunny.com/developer).
+This repo is **not** the Bunny API or MCP server source code — it's distribution metadata for AI tools. The MCP tools themselves are defined in `bunnyapp/api` (`components/**/operations/**/*.tool.yml`). Guidance for building integrations against Bunny's API and SDKs lives at [docs.bunny.com/developer](https://docs.bunny.com/developer), not here.
 
 ## File layout
 
@@ -17,7 +17,7 @@ bunnyapp/skills/                 # ← this directory IS the plugin root
 ├── plugin.json                  # Agent Plugins manifest ($schema + name)
 ├── mcp.json                     # Agent Plugins MCP config (typed server entries)
 ├── skills/
-│   └── <skill-name>/SKILL.md    # One per skill (e.g. skills/bunny-graphql/SKILL.md)
+│   └── <skill-name>/SKILL.md    # One per skill (e.g. skills/bunny-agent-tools/SKILL.md)
 ├── assets/                      # Logo and marketplace screenshots
 │
 ├── .mcp.json                    # Claude Code reads this fixed name; mirrors mcp.json
@@ -52,7 +52,7 @@ bunnyapp/skills/                 # ← this directory IS the plugin root
 
 1. Read `CONTRIBUTING.md` — it documents the SKILL.md shape, the "teach patterns not catalogues" rubric, and the credential-safety rules.
 2. Copy `template/SKILL.md` to `skills/<skill-name>/SKILL.md` and fill it in. One level deep — no nesting.
-3. Verify every mutation signature / payload shape / enum value against the Bunny GraphQL schema (not from memory) before shipping.
+3. Verify every tool argument, enum value, precondition and side effect against the tool definitions in `bunnyapp/api` (not from memory) before shipping.
 4. Open a PR on a branch named `add-skill/<name>`.
 
 **If you're asked to edit an existing skill:**
@@ -66,7 +66,7 @@ This repo has no runtime. It's Markdown + JSON manifests. `npm install` does not
 
 ## What not to do
 
-- **Don't inline secrets in code samples.** Every example reads tokens from env vars (`process.env.BUNNY_ACCESS_TOKEN`, `ENV['BUNNY_ACCESS_TOKEN']`). CI's secret-scan rejects the PR otherwise.
+- **Don't add integration guidance or anything that reads credentials.** Skills cover MCP use only; the MCP server authenticates through OAuth. API, SDK and webhook guidance belongs in the developer docs. A plugin that reads tokens or environment variables from the user's machine is held at plugin-directory review.
 - **Don't split a SKILL.md into sub-files** (no `references/*.md`). Our skills are self-contained. Agents load the full SKILL.md on activation; fragmentation either misses context or inflates the token budget.
 - **Don't rewrite a skill's description without care.** The description controls activation — a vague description means the skill doesn't fire when it should, and a broad description means it fires when it shouldn't.
 - **Don't merge your own PR** — CODEOWNERS routes skill PRs to their owners for review.
@@ -82,6 +82,4 @@ If `validate.yml` fails, read the error and fix locally before re-pushing. See `
 
 ## Related repos
 
-- [bunnyapp/bunny-node](https://github.com/bunnyapp/bunny-node) — official Node / TypeScript SDK
-- [bunnyapp/bunny-ruby](https://github.com/bunnyapp/bunny-ruby) — official Ruby gem
 - [bunnyapp/docs-developer](https://github.com/bunnyapp/docs-developer) — source of [docs.bunny.com/developer](https://docs.bunny.com/developer)
