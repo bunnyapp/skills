@@ -1,26 +1,18 @@
 ---
 name: template-skill
-description: Replace with a description of what this skill does and when Claude should use it. Front-load the key use case and include specific keywords agents will match against (operation names, package names, framework names).
+description: Replace with a description of what this skill teaches an agent to do with the Bunny MCP tools, and when to use it. Front-load the key use case and include the words users say ("add seats", "overdue", "MRR") and the tool names involved.
 ---
 
 # Insert instructions below
 
-## Credential safety
+## Which tools, in which order
 
-Load all Bunny access tokens from environment variables (e.g. `process.env.BUNNY_ACCESS_TOKEN`, `ENV['BUNNY_ACCESS_TOKEN']`). Never hardcode, log, or commit tokens. Rotate tokens regularly.
+<!-- The intent this skill covers, and the tool calls that serve it -->
 
-## Quick Start
+## What goes wrong
 
-<!-- Minimal working example -->
+<!-- Preconditions, rejections and costly mistakes the tool descriptions don't spell out -->
 
-## Common Operations
+## What the tools cannot do
 
-<!-- Bullet list of top 5–8 operations this skill covers -->
-
-## References
-
-<!-- Link to sibling references/*.md or examples/*.{ext} files -->
-
----
-
-Last verified against bunnyapp/api release YYYY-MM-DD-N
+<!-- Nearby requests with no tool, so the agent says so instead of improvising -->

@@ -97,23 +97,21 @@ process to install, run and debug.
 
 ## Checking the connection by hand
 
-Two calls confirm a working server. Both need a bearer token and an `Accept` header listing
-`text/event-stream` — the transport rejects requests without it.
+Two calls confirm a working server. Both need an OAuth access token from the consent flow above, in
+place of `<access-token>`, and an `Accept` header listing `text/event-stream` — the transport rejects
+requests without it.
 
 ```bash
-BUNNY_MCP=https://auth.bunny.com/api/mcp
-TOKEN=…
-
-curl -s -X POST "$BUNNY_MCP" \
-  -H "Authorization: Bearer $TOKEN" \
+curl -s -X POST https://auth.bunny.com/api/mcp \
+  -H "Authorization: Bearer <access-token>" \
   -H "Content-Type: application/json" \
   -H "Accept: application/json, text/event-stream" \
   -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{
         "protocolVersion":"2026-07-28","capabilities":{},
         "clientInfo":{"name":"curl","version":"1.0"}}}'
 
-curl -s -X POST "$BUNNY_MCP" \
-  -H "Authorization: Bearer $TOKEN" \
+curl -s -X POST https://auth.bunny.com/api/mcp \
+  -H "Authorization: Bearer <access-token>" \
   -H "Content-Type: application/json" \
   -H "Accept: application/json, text/event-stream" \
   -d '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}'

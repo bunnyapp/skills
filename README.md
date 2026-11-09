@@ -1,13 +1,13 @@
 # Bunny Agent Plugin
 
-Connect your AI assistant to Bunny. This repository is an
-[Agent Plugin](https://agent-plugins.org) (spec 1.0) bundling two things:
+Connect your AI assistant to Bunny and work with your live billing account
+from chat: look up customers and subscriptions, answer revenue questions,
+preview invoices, build products and pricing, and raise quotes to change or
+cancel a subscription.
 
-- **Developer skills** — Bunny's GraphQL API, the official Node and Ruby SDKs,
-  the `@bunnyapp/components` React library, webhooks, and the customer portal.
-- **Operator skills + MCP tools** — work with a live Bunny account from chat:
-  look up customers, answer revenue questions, preview invoices, build pricing,
-  and raise quotes.
+This repository is an [Agent Plugin](https://agent-plugins.org) (spec 1.0)
+bundling the **Bunny MCP server** with the **skills** that teach an agent to use
+its tools well.
 
 For more context see [docs.bunny.com/developer](https://docs.bunny.com/developer).
 
@@ -74,7 +74,7 @@ npx skills add bunnyapp/skills --skill <skill-name>
 ## Connect your Bunny account
 
 Installing the plugin gives you the skills. The MCP tools — everything that
-reads or changes real data — need you to authenticate once, against a single
+reads or changes real data — need you to sign in once, against a single
 endpoint that is the same for every account:
 
 ```text
@@ -92,8 +92,7 @@ Hosts that still want a client ID and secret typed in are covered in
 [MCP.md](MCP.md), along with the OAuth redirect URI that most often trips people
 up.
 
-Without this step the developer skills still work; the operator skills have no
-tools to call.
+Until you connect, the skills have no tools to call.
 
 ## How it is packaged
 
@@ -114,42 +113,39 @@ every skill, many distribution targets. CI validates conformance on every PR.
 
 ## What you get
 
-- **Docs and schema-aware help**: search Bunny's developer documentation and
-  GraphQL schema from inside your editor
-- **SDK-guided integration**: correct setup and usage patterns for the Node
-  (`@bunnyapp/api-client`) and Ruby (`bunny_app`) SDKs
-- **React components**: guided integration of `@bunnyapp/components`
-  (BillingDetails, Invoice, Signup, Subscriptions, Quote, Quotes, Transactions)
-- **Webhook handlers**: correct patterns for platform and workflow webhooks
-- **Lifecycle flows**: quote → apply → subscription; renewals, upgrades,
-  cancellation; invoices, payments, credit notes
+- **Answers from your data**: customers, subscriptions, invoices and quotes;
+  MRR, ARR, churn, retention and AR aging; next-invoice previews; CSV exports
+- **Changes, confirmed first**: add seats, change price, discount, renew,
+  migrate or cancel a subscription through quotes; create customers and
+  contacts; build products, plans, price lists and charges
+- **Advice**: briefings and findings on collections, retention, renewals,
+  growth, pricing, revenue concentration and data quality
+- **Documentation**: search Bunny's product and developer docs from chat
 
 ## Available skills
 
 | Skill | Covers |
 | --- | --- |
-| `bunny-graphql` | Direct GraphQL API: endpoint, auth, pagination, common operations |
-| `bunny-node-sdk` | `@bunnyapp/api-client` (Node / TypeScript) |
-| `bunny-ruby-sdk` | `bunny_app` gem (Ruby / Rails) |
-| `bunny-components` | `@bunnyapp/components` React library |
-| `bunny-webhooks` | Platform and workflow webhook handling |
-| `bunny-customer-portal` | Popup, standalone, and signup portal variants |
-| `bunny-catalog` | Products, plans, features, price lists, coupons |
-| `bunny-quoting` | Quote lifecycle (create → share → accept → apply) |
-| `bunny-subscriptions` | Subscription lifecycle: renewals, upgrades, cancellation, usage |
-| `bunny-billing` | Invoices, payments, credit notes, reconciliation |
-| `bunny-analytics` | MRR / ARR / churn, RevRec schedules, reporting exports |
-| `bunny-agent-tools` | Operating a live Bunny account through the MCP tool set |
-| `bunny-agent-data` | Reading and interpreting Bunny data via MCP |
-| `bunny-agent-changes` | Making changes via MCP: quote lifecycle, catalogue, cancellation |
+| `bunny-agent-tools` | The domain model, record states, which tool answers which request, what the tools cannot do |
+| `bunny-agent-data` | Reading data: `gql_query` filters, `analytics_query` metrics, `bunny://` resources, exports |
+| `bunny-agent-changes` | Making changes: quotes, discounts, cancellation, renewals, the catalogue, customers |
+| `bunny-agent-insights` | Advice and briefings: collections, retention, renewals, growth, pricing, concentration, data quality |
 
 Each lives at `skills/<name>/SKILL.md`.
 
-## Credential safety
+## Privacy and access
 
-Every code sample in this plugin reads tokens from environment variables. When
-integrating Bunny, **never** hardcode, log, or commit access tokens. Rotate
-tokens regularly and scope them to the minimum set of permissions you need.
+The plugin reads no credentials from your machine. The MCP server signs you in
+with OAuth, and the token it issues is limited to your own Bunny permissions
+and the account you consented for. Write tools ask for confirmation before
+they change anything. See the [Bunny privacy policy](https://bunny.com/privacy/).
+
+## Building an integration?
+
+To integrate Bunny into your own application — the GraphQL API, the Node and
+Ruby SDKs, the React components, webhooks or the customer portal — see
+[docs.bunny.com/developer](https://docs.bunny.com/developer). The
+`mcp_docs_search` tool searches the same documentation from chat.
 
 ## Feedback
 
